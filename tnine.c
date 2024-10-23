@@ -4,20 +4,24 @@
 #include <string.h>
 #include <ctype.h>
 
+// Maximal length of contact or number
+#define MAX_CONTACT_LENGTH 100
+
+
 // Struct contact used here for creating contact to work with
 // numericRepresenation is contacts name converted to numbers as expected on input
 typedef struct Contact {
-    char name[101];
+    char name[MAX_CONTACT_LENGTH+1];
     char number[10];
-    char numericRepresentaion[101];
+    char numericRepresentaion[MAX_CONTACT_LENGTH+1];
 } Contact;
 
 // Converts text to numeric representation, used for contacts names
-char* convertToNumbers(char name[101]) {
-    static char result[101];
+char* convertToNumbers(char name[MAX_CONTACT_LENGTH+1]) {
+    static char result[MAX_CONTACT_LENGTH+1];
     bool end = false;
     int nChar;
-    for (nChar = 0; nChar < 101; nChar++) {
+    for (nChar = 0; nChar < MAX_CONTACT_LENGTH+1; nChar++) {
         switch (tolower(name[nChar])) {
         case '+': case '0':
             result[nChar] = '0';
@@ -60,10 +64,32 @@ char* convertToNumbers(char name[101]) {
 }
 
 // Checks if contact number or numericRepresentaion contains input numbers
-int isMatch(char inputSearch[101], Contact contact) {
+int isMatch(char inputSearch[MAX_CONTACT_LENGTH+1], Contact contact) {
     if (strstr(contact.numericRepresentaion, inputSearch)) return 1;
     else if (strstr(contact.number, inputSearch)) return 2;
     else return 0;
+}
+
+int isMatchAdvanced(char inputSearch[MAX_CONTACT_LENGTH+1], Contact contact) {
+    int pivot = 0;
+    for (int chName = 0; chName < (int)strlen(contact.name); chName++) {
+        if (contact.numericRepresentaion[chName] == inputSearch[pivot]) {
+            pivot++;
+            if (inputSearch[pivot] == '\0') {
+                return 1;
+            }
+        }
+    }
+    pivot = 0;
+    for (int chNum = 0; chNum < (int)strlen(contact.name); chNum++) {
+        if (contact.number[chNum] == inputSearch[pivot]) {
+            pivot++;
+            if (inputSearch[pivot] == '\0') {
+                return 2;
+            }
+        }
+    }
+    return 0;
 }
 
 // printing contact
@@ -71,63 +97,80 @@ void printContact(Contact contact) {
     printf("%s, %s\n", contact.name, contact.number);
 }
 
-int isAllDigits(char input[101]) {
+int isAllDigits(char input[MAX_CONTACT_LENGTH+1]) {
     for (int iChar = 0; iChar < (int)strlen(input); iChar++) {
         if (!isdigit(input[iChar])) return 0;
     }
     return 1;
 }
 
-// Arguments expected:
-// 1: input for search;
-// 2: file name
-// optional argument on first position might be "-s", than all arguments are shifted by 1
+
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
-        fprintf(stderr, "Not enough arguments: %s <number> <filename>\n", argv[0]);
-        return 1;
-    }
-    bool advancedSearch = false;
     int mod = 0;
-    if (strcmp(argv[1], "-s") == 0) {
-        advancedSearch = true;
-        mod++;
-    }
-    if (!isAllDigits(argv[1+mod])) {
-        fprintf(stderr, "Searched string should be all digits!\n");
-    }
-
-    if (advancedSearch) {
-        printf("advanced\n");
-    }
-
-    printf("%d\n", isAllDigits("657"));
-    printf("%d\n", isAllDigits("6+7"));
-    printf("%d\n", isAllDigits("657f"));
-    
     // Number of contacts found, used for detecting in no contacts were found
     int numOfMatches = 0;
-
-    char inputSearch[101];
-    strcpy(inputSearch, argv[1]);
-
     Contact workingContact;
-    strcpy(workingContact.name, "Sam");
-    strcpy(workingContact.number, "123456789");
-    strcpy(workingContact.numericRepresentaion, convertToNumbers(workingContact.name));
-
-    //printf("%s (%s): %s\n", workingContact.name, workingContact.number, workingContact.numericRepresentaion); // debug
-
-    if (isMatch(inputSearch, workingContact)) {
-        printContact(workingContact);
-        numOfMatches++;
+    
+    if (argc > 1) {
+        if (strcmp(argv[1], "-s") == 0) mod = 1;
     }
+    char inputSearch[MAX_CONTACT_LENGTH+1];
+    if (argc <= 1+mod) {
+        strcpy(inputSearch, "\0");
+    } else if (!isAllDigits(argv[1+mod])) {
+        fprintf(stderr, "Searched string should be all digits!\n");
+        return 1;
+    } else strcpy(inputSearch, argv[1+mod]);
 
+    char cName[MAX_CONTACT_LENGTH+2];
+    char cNumber[MAX_CONTACT_LENGTH+2];
+    // Loop that goes through entire list of contacts
+    while (fgets(cName, sizeof(cName), stdin)) {
+        // Check if contact name is not longer than MAX_CONTACT_LENGTH
+        if (cName[MAX_CONTACT_LENGTH+1] == '\n') {
+            fprintf(stderr, "Line in the contacts file is too long (name)!\n");
+            return 1;
+        }
+        // Replacing new line character with string end character
+        cName[strcspn(cName, "\n")] = '\0';
+        // Getting the next line (should be number)
+        if (!fgets(cNumber, sizeof(cNumber), stdin)) {
+            fprintf(stderr, "Contact without phone number found!");
+            return 1;
+        }
+        // Same check as for contact name
+        if (cNumber[MAX_CONTACT_LENGTH+1] == '\n') {
+            fprintf(stderr, "Line in the contacts file is too long (number)!\n");
+            return 1;
+        }
+        // Same replace
+        cNumber[strcspn(cNumber, "\n")] = '\0';
+
+
+
+        // loading current contact to the working contact struct
+        strcpy(workingContact.name, cName);
+        strcpy(workingContact.number, cNumber);
+        strcpy(workingContact.numericRepresentaion, convertToNumbers(workingContact.name));
+
+        // check if phone number is valid
+        if (!isAllDigits(workingContact.number)) {
+            fprintf(stderr, "Contact number contains non-digit characters!\n");
+            return 1;
+        }
+
+        if (mod == 0) {
+            if (isMatch(inputSearch, workingContact)) {
+                printContact(workingContact);
+                numOfMatches++;
+            }
+        } else {
+            if (isMatchAdvanced(inputSearch, workingContact)) {
+                printContact(workingContact);
+                numOfMatches++;
+            }
+        }
+    }
     if (numOfMatches == 0) printf("not found\n");
-    
-    
-
     return 0;
 }
-
-
