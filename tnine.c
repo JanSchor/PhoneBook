@@ -70,6 +70,7 @@ int isMatch(char inputSearch[MAX_CONTACT_LENGTH+1], Contact contact) {
     else return 0;
 }
 
+// Advanced function for -s argument on program call
 int isMatchAdvanced(char inputSearch[MAX_CONTACT_LENGTH+1], Contact contact) {
     int pivot = 0;
     for (int chName = 0; chName < (int)strlen(contact.name); chName++) {
@@ -106,12 +107,15 @@ int isAllDigits(char input[MAX_CONTACT_LENGTH+1]) {
 
 
 int main(int argc, char *argv[]) {
+    // mod represents midifier, can be 0 or 1
     int mod = 0;
     // Number of contacts found, used for detecting in no contacts were found
     int numOfMatches = 0;
     Contact workingContact;
     
     if (argc > 1) {
+        // mod is set to 1 indicating advanced search was desired
+        // mod is also used as modifier when getting desired index from argv
         if (strcmp(argv[1], "-s") == 0) mod = 1;
     }
     char inputSearch[MAX_CONTACT_LENGTH+1];
@@ -146,8 +150,6 @@ int main(int argc, char *argv[]) {
         // Same replace
         cNumber[strcspn(cNumber, "\n")] = '\0';
 
-
-
         // loading current contact to the working contact struct
         strcpy(workingContact.name, cName);
         strcpy(workingContact.number, cNumber);
@@ -159,6 +161,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
+        // check for advanced search; 0 = basic; 1 = advanced
         if (mod == 0) {
             if (isMatch(inputSearch, workingContact)) {
                 printContact(workingContact);
