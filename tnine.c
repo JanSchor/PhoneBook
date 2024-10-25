@@ -12,8 +12,9 @@
 // numericRepresenation is contacts name converted to numbers as expected on input
 typedef struct Contact {
     char name[MAX_CONTACT_LENGTH+1];
-    char number[10];
-    char numericRepresentaion[MAX_CONTACT_LENGTH+1];
+    char number[MAX_CONTACT_LENGTH+1];
+    char numericRepresentation[MAX_CONTACT_LENGTH+1];
+    char numericRepresentationNumber[MAX_CONTACT_LENGTH+1];
 } Contact;
 
 // Converts text to numeric representation, used for contacts names
@@ -63,10 +64,10 @@ char* convertToNumbers(char name[MAX_CONTACT_LENGTH+1]) {
     return result;
 }
 
-// Checks if contact number or numericRepresentaion contains input numbers
+// Checks if contact number or numericRepresentation contains input numbers
 int isMatch(char inputSearch[MAX_CONTACT_LENGTH+1], Contact contact) {
-    if (strstr(contact.numericRepresentaion, inputSearch)) return 1;
-    else if (strstr(contact.number, inputSearch)) return 2;
+    if (strstr(contact.numericRepresentation, inputSearch)) return 1;
+    else if (strstr(contact.numericRepresentationNumber, inputSearch)) return 2;
     else return 0;
 }
 
@@ -74,7 +75,7 @@ int isMatch(char inputSearch[MAX_CONTACT_LENGTH+1], Contact contact) {
 int isMatchAdvanced(char inputSearch[MAX_CONTACT_LENGTH+1], Contact contact) {
     int pivot = 0;
     for (int chName = 0; chName < (int)strlen(contact.name); chName++) {
-        if (contact.numericRepresentaion[chName] == inputSearch[pivot]) {
+        if (contact.numericRepresentation[chName] == inputSearch[pivot]) {
             pivot++;
             if (inputSearch[pivot] == '\0') {
                 return 1;
@@ -83,7 +84,7 @@ int isMatchAdvanced(char inputSearch[MAX_CONTACT_LENGTH+1], Contact contact) {
     }
     pivot = 0;
     for (int chNum = 0; chNum < (int)strlen(contact.name); chNum++) {
-        if (contact.number[chNum] == inputSearch[pivot]) {
+        if (contact.numericRepresentationNumber[chNum] == inputSearch[pivot]) {
             pivot++;
             if (inputSearch[pivot] == '\0') {
                 return 2;
@@ -100,7 +101,9 @@ void printContact(Contact contact) {
 
 int isAllDigits(char input[MAX_CONTACT_LENGTH+1]) {
     for (int iChar = 0; iChar < (int)strlen(input); iChar++) {
-        if (!isdigit(input[iChar])) return 0;
+        if (!isdigit(input[iChar])) {
+            return 0;
+        } 
     }
     return 1;
 }
@@ -125,6 +128,11 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Searched string should be all digits!\n");
         return 1;
     } else strcpy(inputSearch, argv[1+mod]);
+
+    if (argc > 2+mod) {
+        fprintf(stderr, "Too many arguments!\n");
+        return 1;
+    }
 
     char cName[MAX_CONTACT_LENGTH+2];
     char cNumber[MAX_CONTACT_LENGTH+2];
@@ -153,13 +161,16 @@ int main(int argc, char *argv[]) {
         // loading current contact to the working contact struct
         strcpy(workingContact.name, cName);
         strcpy(workingContact.number, cNumber);
-        strcpy(workingContact.numericRepresentaion, convertToNumbers(workingContact.name));
+        strcpy(workingContact.numericRepresentation, convertToNumbers(workingContact.name));
+        strcpy(workingContact.numericRepresentationNumber, convertToNumbers(workingContact.number));
 
         // check if phone number is valid
+        /*
         if (!isAllDigits(workingContact.number)) {
             fprintf(stderr, "Contact number contains non-digit characters!\n");
             return 1;
         }
+        */
 
         // check for advanced search; 0 = basic; 1 = advanced
         if (mod == 0) {
