@@ -74,3 +74,7 @@ gcc -std=c11 -Wall -Wextra -Werror tnine.c -o tnine
 ```
 
 All the warning used are from the assignment and they were mandatory.
+
+### Testing
+
+For test I used program from another student he shared. The program is in python. Link to his repo is [here](https://github.com/TheRamsay/izp-project-1).
